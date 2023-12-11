@@ -1,11 +1,9 @@
-// 27_EdgeImpulse_FOMO.ino
 #define MAX_RESOLUTION_VGA 1
 
 /**
  * Run Edge Impulse FOMO model on the Esp32 camera
  */
 
-// replace with the name of your library
 #include <FS.h>
 #include <SD_MMC.h>
 #include <SPI.h>
@@ -21,8 +19,12 @@ TinyML::EdgeImpulse::FOMO fomo;
 
 uint32_t counter = 1;
 
+//Semaphore for 2 tasks to communicate with each other
 static SemaphoreHandle_t binarySemaphore;     
 
+/**
+ * Task that handle image processing and saving images to SD card
+ */
 void imageProcessingTask(void *pvParameter)
 {
   while (1)
@@ -68,12 +70,17 @@ void imageProcessingTask(void *pvParameter)
   }
 }
 
+/**
+ * Task that handle machine controller
+ */
 void machineControllerTask(void *pvParameter)
 {
   while (1)
   {
+    // It wait for signal from image processing task
     if (xSemaphoreTake(binarySemaphore, 100))
     {
+      // If it takes the signal, the task will turn on the machine
       Serial.println("LED ON!");
     }
   }
@@ -84,11 +91,7 @@ void setup() {
     delay(3000);
     Serial.println("Init");
 
-
-    /**
-     * Replace with your camera model.
-     * Available: aithinker, m5, m5wide, wrover, eye, ttgoLCD
-     */
+    // Begin camera configuration
     cam.aithinker();
     cam.highQuality();
     cam.highestSaturation();
@@ -100,7 +103,7 @@ void setup() {
     while (!SD_MMC.begin() || SD_MMC.cardType() == CARD_NONE)
         Serial.println("Cannot init SD Card");
 
-    Serial.println("Init successful!");
+    Serial.println("Init cam and sd card successful!");
 
     binarySemaphore = xSemaphoreCreateBinary();
     if(binarySemaphore == NULL)
@@ -130,5 +133,5 @@ void setup() {
 }
 
 void loop() {
-  
+  // Do nothing
 }
