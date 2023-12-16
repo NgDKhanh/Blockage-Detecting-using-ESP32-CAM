@@ -7,7 +7,6 @@
 #include <FS.h>
 #include <SD_MMC.h>
 #include <SPI.h>
-// #include <Detect_blokage_inferencing.h>
 #include <blockage_inferencing.h>
 #include "esp32cam.h"
 #include "esp32cam/tinyml/edgeimpulse/FOMO.h"
@@ -86,7 +85,7 @@ void machineControllerTask(void *pvParameter)
       // If it takes the signal, the task will turn on the machine
       Serial.println("MACHINE ON!");
       digitalWrite(MACHINE_PIN, HIGH);
-      // Wait for 1s then turn off
+      // Wait for 0.5s then turn off
       vTaskDelay(500);
       digitalWrite(MACHINE_PIN, LOW);
     }
@@ -122,6 +121,7 @@ void setup() {
       Serial.println("Semaphore create OK!");
     }
 
+    // Init the machine control pin
     pinMode(MACHINE_PIN, OUTPUT);
 
     xTaskCreate(            // Use xTaskCreate() in vanilla FreeRTOS
