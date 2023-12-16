@@ -7,9 +7,12 @@
 #include <FS.h>
 #include <SD_MMC.h>
 #include <SPI.h>
-#include <khanhdtvt192934-project-1_inferencing.h>
+// #include <Detect_blokage_inferencing.h>
+#include <blockage_inferencing.h>
 #include "esp32cam.h"
 #include "esp32cam/tinyml/edgeimpulse/FOMO.h"
+
+#define MACHINE_PIN 3
 
 
 using namespace Eloquent::Esp32cam;
@@ -47,9 +50,9 @@ void imageProcessingTask(void *pvParameter)
         Serial.printf("Found %d objects in %d millis\n", fomo.count(), fomo.getExecutionTimeInMillis());
 
         fomo.forEach([](size_t ix, ei_impulse_result_bounding_box_t bbox) {
-            if (bbox.label == "nivia")
+            if (bbox.label == "blockage")
             {
-              String filename = String("/nivia_") + counter + ".jpg";
+              String filename = String("/blockage_") + counter + ".jpg";
 
               if (cam.saveTo(SD_MMC, filename)) {
                   Serial.println(filename + " saved to disk");
@@ -81,7 +84,11 @@ void machineControllerTask(void *pvParameter)
     if (xSemaphoreTake(binarySemaphore, 100))
     {
       // If it takes the signal, the task will turn on the machine
-      Serial.println("LED ON!");
+      Serial.println("MACHINE ON!");
+      digitalWrite(MACHINE_PIN, HIGH);
+      // Wait for 1s then turn off
+      vTaskDelay(500);
+      digitalWrite(MACHINE_PIN, LOW);
     }
   }
 }
@@ -114,6 +121,8 @@ void setup() {
     {
       Serial.println("Semaphore create OK!");
     }
+
+    pinMode(MACHINE_PIN, OUTPUT);
 
     xTaskCreate(            // Use xTaskCreate() in vanilla FreeRTOS
       imageProcessingTask,  // Function to be called
